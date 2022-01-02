@@ -1,0 +1,49 @@
+﻿body {
+    background: #eee;
+}
+
+#canvas {
+    margin: 10px;
+    background: #ffffff;
+    border: 1px solid #aaaaaa;
+}
+
+input[type="image"] {
+    padding: 2px;
+    outline: none;
+}
+
+input[type="image"].active {
+    background-color: #fff;
+}
+
+canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/*スクロール禁止*/
+.dummy {
+    height: 500px;
+    background-color: #f7f7f7;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+}
+
+.controller {
+    position: fixed;
+    top: 0;
+}
+
+/*戻る・進む機能*/
+div#img-box {
+    border: 3px solid #000;
+    width: 500px;
+}
+
+div#btn-box {
+    position: fixed;
+    bottom: 0px;
+}
