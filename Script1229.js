@@ -16,17 +16,16 @@ var rect_ey = 0;
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
-//スマホの振り分け
-var ua = navigator.userAgent;
-if (ua.indexOf('iPhone') > 0) {
+if (navigator.userAgent.indexOf('iPhone') > 0 || navigator.userAgent.indexOf('iPod') > 0 ||(navigator.userAgent.indexOf('Android') > 0 && navigator.userAgent.indexOf('Mobile') > 0)) {
     ua = 'iphone';
-} else if (ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0) {
+} else if (navigator.userAgent.indexOf('iPad') > 0 ||navigator.userAgent.indexOf('Android') > 0) {
     ua = 'sp';
-} else if (ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0) {
+} else if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1 &&typeof document.ontouchstart !== 'undefined') {
     ua = 'tab';
 } else {
     ua = 'other';
 }
+
 
 //イベントの振り分け
 var EVENT = {};
