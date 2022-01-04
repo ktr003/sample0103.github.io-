@@ -3,6 +3,15 @@ var drawing = false;
 // 前回の座標を記録
 var before_x = 0;
 var before_y = 0;
+// 矩形用
+var MIN_WIDTH = 3;
+var MIN_HEIGHT = 3;
+var canvas, stx;
+var rect_MousedownFlg = false;
+var rect_sx = 0;
+var rect_sy = 0;
+var rect_ex = 0;
+var rect_ey = 0;
 
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
@@ -30,8 +39,6 @@ if (ua != 'other') {//スマートフォンだったら
     EVENT.TOUCH_MOVE = 'mousemove';
     EVENT.TOUCH_END = 'mouseup';
 }
-
-canvas.addEventListener('mousemove', draw_canvas);
 
 // マウスをクリックしてる時
 canvas.addEventListener('mousedown', function (e) {
@@ -73,50 +80,74 @@ function draw_canvas(e) {
     before_y = y;
 }
 
+//矩形
+function draw_Rectangle(e) {
+    //OnMouseup();
+    //OnMousedown();
+    //OnMousemove();
+}
+
 var pen = document.getElementById('pencil');
 var era = document.getElementById('eraser');
+var scr = document.getElementById('scroll');
 var sen = document.getElementById('sentaku');
 
-// スクロールを禁止にする関数
+// スクロール禁止関数
 function disableScroll(event) {
     event.preventDefault();
 }
 
-// 鉛筆と消しゴムの切り替え
+// 鉛筆、消しゴム、スクロール、矩形選択
 function tool(btnNum) {
-    // クリックされたボタンが鉛筆だったら
+    // スクロールボタン
     if (btnNum == 1) {
         document.removeEventListener('touchmove', disableScroll, { passive: false });
         document.body.classList.remove('overflow-hidden');
+        canvas.removeEventListener('mousemove', draw_Rectangle);
+        canvas.removeEventListener('mousemove', draw_canvas);
+        scr.className = 'active';
+        pen.className = '';
+        era.className = '';
+        sen.className = ''; 
+    }
+    // 鉛筆ボタン
+    else if (btnNum == 2) {
+        document.addEventListener('touchmove', disableScroll, { passive: false });
+        document.body.classList.add('overflow-hidden');
         ctx.globalCompositeOperation = 'source-over';
+        canvas.removeEventListener('mousemove', draw_Rectangle);
+        canvas.addEventListener('mousemove', draw_canvas);
+        scr.className = '';
         pen.className = 'active';
         era.className = '';
-        sen.className = '';
-
+        sen.className = ''; 
     }
-    // クリックされたボタンが消しゴムだったら
-    else if (btnNum == 2) {
-        document.removeEventListener('touchmove', disableScroll, { passive: false });
-        document.body.classList.remove('overflow-hidden');
-        ctx.globalCompositeOperation = 'destination-out';
-        pen.className = '';
-        era.className = 'active';
-        sen.className = '';
-    }
-    // クリックされたボタンが範囲選択だったら
+    // 消しゴムボタン
     else if (btnNum == 3) {
         document.addEventListener('touchmove', disableScroll, { passive: false });
         document.body.classList.add('overflow-hidden');
+        ctx.globalCompositeOperation = 'destination-out';
+        canvas.removeEventListener('mousemove', draw_Rectangle);
+        canvas.addEventListener('mousemove', draw_canvas);
+        scr.className = '';
+        pen.className = '';
+        era.className = 'active';
+        sen.className = ''; 
+    }
+    // 範囲選択ボタン
+    else if (btnNum == 4) {
+        document.addEventListener('touchmove', disableScroll, { passive: false });
+        document.body.classList.add('overflow-hidden');
+        canvas.removeEventListener('mousemove', draw_canvas);
+        canvas.addEventListener('mousemove', draw_Rectangle);
+        scr.className = '';
         pen.className = '';
         era.className = '';
-        sen.className = 'active';
+        sen.className = 'active'; 
     }
 }
 
 window.addEventListener('load', function () {
-
-    //canvas.height = document.documentElement.clientWidth;
-    //canvas.width = document.documentElement.clientWidth / 1.4;
 
     var background = new Image();
     background.src = "gridpaper.jpg";
@@ -157,7 +188,6 @@ window.addEventListener('load', function () {
         // 配列に保存しておく
         img_datas_arr[img_datas_cnt] = ctx.getImageData(0, 0, canvas.width, canvas.height);
         img_datas_cnt++;
-
     });
     // マウスムーブイベントを設定
     window.addEventListener(EVENT.TOUCH_MOVE, function (e) {
@@ -229,5 +259,77 @@ window.addEventListener('load', function () {
         a.href = dataUrl;
         a.download = fileName;
         a.dispatchEvent(event);
+    }
+    // 色の反転
+    function getTurningAround(color) {
+        // 灰色は白にする
+        if (color >= 88 && color <= 168) {
+            return 255;
+            // 色を反転する
+        } else {
+            return 255 - color;
+        }
+    }
+    //矩形
+    function OnMousedown() {
+        rect_MousedownFlg = true;
+        // 座標を求める
+        var rect = event.target.getBoundingClientRect();
+        rect_sx = rect_ex = event.clientX - rect.left;
+        rect_sy = rect_ey = event.clientY - rect.top;
+        // 矩形の枠色を反転させる
+        var imagedata = ctx.getImageData(rect_sx, rect_sy, 1, 1);
+        ctx.strokeStyle = 'rgb(' + getTurningAround(imagedata.data[0]) +
+            ',' + getTurningAround(imagedata.data[1]) +
+            ',' + getTurningAround(imagedata.data[2]) + ')';
+        // 線の太さ
+        ctx.lineWidth = 2;
+        // 矩形の枠線を点線にする
+        ctx.setLineDash([2, 3]);
+    }
+    function OnMousemove() {
+        if (rect_MousedownFlg) {
+            // 座標を求める
+            var rect = event.target.getBoundingClientRect();
+            rect_ex = event.clientX - rect.left;
+            rect_ey = event.clientY - rect.top;
+            // 元画像の再描画
+            ctx.drawImage(image, 0, 0);
+            // 矩形の描画
+            ctx.beginPath();
+            // 上
+            ctx.moveTo(rect_sx, rect_sy);
+            ctx.lineTo(rect_ex, rect_sy);
+            // 下
+            ctx.moveTo(rect_sx, rect_ey);
+            ctx.lineTo(rect_ex, rect_ey);
+            // 右
+            ctx.moveTo(rect_ex, rect_sy);
+            ctx.lineTo(rect_ex, rect_ey);
+            // 左
+            ctx.moveTo(rect_sx, rect_sy);
+            ctx.lineTo(rect_sx, rect_ey);
+
+            ctx.stroke();
+        }
+    }
+    function OnMouseup() {
+        // キャンバスの範囲外は無効にする
+        if (rect_sx === rect_ex && rect_sy === rect_ey) {
+            // 初期化
+            //ctx.drawImage(image, 0, 0);
+            rect_sx = rect_ex = 0;
+            rect_sy = rect_ey = 0;
+        }
+        // 矩形の画像を取得する
+        if (rect_MousedownFlg) {
+            event.preventDefault();
+            // base64エンコード
+            var base64 = canvas.toDataURL('image/jpeg');
+            var blob = Base64toBlob(base64);
+            // blobデータをa要素を使ってダウンロード
+            saveBlob(blob, 'report.jpg');
+        }
+        rect_MousedownFlg = false;
     }
 });
