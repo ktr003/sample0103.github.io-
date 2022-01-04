@@ -6,7 +6,6 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no">
     <link rel="stylesheet" type="text/css" href="StyleSheet.css">
-    <script defer src="/__/firebase/init.js"></script>
     <script>
         window.addEventListener('load', function () {
             if ('serviceWorker' in navigator) {
@@ -15,120 +14,15 @@
             }
         });
     </script>
-    <script>
-        // キャンバス
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-        // 矩形用
-        var MIN_WIDTH = 3;
-        var MIN_HEIGHT = 3;
-
-        var rect_MousedownFlg = false;
-        var rect_sx = 0;
-        var rect_sy = 0;
-        var rect_ex = 0;
-        var rect_ey = 0;
-        // 色の反転
-        function getTurningAround(color) {
-            // 灰色は白にする
-            if (color >= 88 && color <= 168) {
-                return 255;
-                // 色を反転する
-            } else {
-                return 255 - color;
-            }
-        }
-        function OnMousedown(event) {
-            rect_MousedownFlg = true;
-            // 座標を求める
-            var rect = event.target.getBoundingClientRect();
-            rect_sx = rect_ex = event.clientX - rect.left;
-            rect_sy = rect_ey = event.clientY - rect.top;
-            // 矩形の枠色を反転させる
-            var imagedata = ctx.getImageData(rect_sx, rect_sy, 1, 1);
-            ctx.strokeStyle = 'rgb(' + getTurningAround(imagedata.data[0]) +
-                ',' + getTurningAround(imagedata.data[1]) +
-                ',' + getTurningAround(imagedata.data[2]) + ')';
-            // 線の太さ
-            ctx.lineWidth = 2;
-            // 矩形の枠線を点線にする
-            ctx.setLineDash([2, 3]);
-        }
-        function OnMousemove(event) {
-            if (rect_MousedownFlg) {
-                // 座標を求める
-                var rect = event.target.getBoundingClientRect();
-                rect_ex = event.clientX - rect.left;
-                rect_ey = event.clientY - rect.top;
-                // 元画像の再描画
-                ctx.drawImage(image, 0, 0);
-                // 矩形の描画
-                ctx.beginPath();
-                // 上
-                ctx.moveTo(rect_sx, rect_sy);
-                ctx.lineTo(rect_ex, rect_sy);
-                // 下
-                ctx.moveTo(rect_sx, rect_ey);
-                ctx.lineTo(rect_ex, rect_ey);
-                // 右
-                ctx.moveTo(rect_ex, rect_sy);
-                ctx.lineTo(rect_ex, rect_ey);
-                // 左
-                ctx.moveTo(rect_sx, rect_sy);
-                ctx.lineTo(rect_sx, rect_ey);
-
-                ctx.stroke();
-            }
-        }
-        function OnMouseup(event) {
-            // キャンバスの範囲外は無効にする
-            if (rect_sx === rect_ex && rect_sy === rect_ey) {
-                // 初期化
-                ctx.drawImage(image, 0, 0);
-                rect_sx = rect_ex = 0;
-                rect_sy = rect_ey = 0;
-            }
-            // 矩形の画像を取得する
-            if (rect_MousedownFlg) {
-                event.preventDefault();
-                // base64エンコード
-                var base64 = canvas.toDataURL('image/jpeg');
-                var blob = Base64toBlob(base64);
-                // blobデータをa要素を使ってダウンロード
-                saveBlob(blob, 'report.jpg');
-            }
-            rect_MousedownFlg = false;
-        }
-        // 画像のダウンロード
-        function saveBlob(blob, fileName) {
-            var url = (window.URL || window.webkitURL);
-            // ダウンロード用のURL作成
-            var dataUrl = url.createObjectURL(blob);
-            // イベント作成
-            var event = document.createEvent("MouseEvents");
-            event.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-            // a要素を作成
-            var a = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-            a.href = dataUrl;
-            a.download = fileName;
-            a.dispatchEvent(event);
-        }
-        function onDragOver(event) {
-            event.preventDefault();
-        }
-        function onDrop(event) {
-            onAddFile(event);
-            event.preventDefault();
-        }
-    </script>
 </head>
 
 <body ondrop="onDrop(event);" ondragover="onDragOver(event);">
     <label>色<input id="color" type="color"></label>
     <label>太さ<input id="width" type="number" min="1" max="30"></label>
-    <input type="image" id="pencil" src="1.png" width="20" class="active" onClick="tool(1)">
-    <input type="image" id="eraser" src="2.png" width="20" onClick="tool(2)">
-    <input type="image" id="sentaku" src="3.jpg" width="20" onClick="tool(3)">
+    <input type="image" id="scroll" src="scroll.png" width="20" class="active" onClick="tool(1)">
+    <input type="image" id="pencil" src="1.png" width="20" onClick="tool(2)">
+    <input type="image" id="eraser" src="2.png" width="20" onClick="tool(3)">
+    <input type="image" id="sentaku" src="3.jpg" width="20" onClick="tool(4)">
     <button id="delbt">クリア</button><button id="savebt">保存</button><button id="send">提出</button>
     <form>
         <input type='file' accept='image/*' multiple='multiple' name='imgs[]'>
@@ -137,6 +31,7 @@
 
     <br />
     <canvas id="canvas"></canvas>
+    <canvas id="RecCanvas"></canvas>
     <script src="Script1229.js"></script>
 
     <a href='https://ktr003.github.io/note2348.github.io/#&togetherjs=kqyhLSd8TK' target="_blank">ログイン</a>
@@ -147,13 +42,13 @@
     <script>
         //firebase初期化
         const firebaseConfig = {
-            apiKey: "...",
-            authDomain: "...",
-            projectId: "...",
-            storageBucket: "...",
-            messagingSenderId: "...",
-            appId: "...",
-            measurementId: "..."
+            apiKey: "AIzaSyDtDj9LnJFA7Vct4JbAbqidNg1BsSq8YNY",
+            authDomain: "noteapp-1229.firebaseapp.com",
+            projectId: "noteapp-1229",
+            storageBucket: "noteapp-1229.appspot.com",
+            messagingSenderId: "330140971770",
+            appId: "1:330140971770:web:3760d22c8f5ff8c23d8f43",
+            measurementId: "G-5WMTW9TM22"
         };
         firebase.initializeApp(firebaseConfig);
 
@@ -166,6 +61,7 @@
             for (var file of imgs.files) {
                 var storageRef = firebase.storage().ref('report-uploaded/' + file.name);
                 uploads.push(storageRef.put(file));
+
             }
             //すべての画像のアップロード完了を待つ
             Promise.all(uploads).then(function () {
@@ -177,20 +73,6 @@
         var metadata = {
             contentType: "image/*",
         };
-        //ダウンロード
-        const down = document.getElementById("down");
-        down.addEventListener("click", () => {
-            //ファイルの取得
-            const file = document.getElementById("fileButton").files[0];
-            //ファイルの参照
-            var storageRef = firebase.storage().ref();
-            const DownloadTask = storageRef.child('report-uploaded/' + file.name);
-
-            //画像ファイルのダウンロード
-            DownloadTask.getDownloadURL().then((downloadURL) => {
-                document.getElementById("image").src = downloadURL;
-            });
-        });
     </script>
 </body>
 </html>
