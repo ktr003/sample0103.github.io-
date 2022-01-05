@@ -68,7 +68,7 @@ function draw_canvas(e) {
     // 描画
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
-    ctx.lineWidth = w;
+    ctx.lineWidth = w*1.5;
     ctx.beginPath();
     ctx.moveTo(before_x, before_y);
     ctx.lineTo(x, y);
